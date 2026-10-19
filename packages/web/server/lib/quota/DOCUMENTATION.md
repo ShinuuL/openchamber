@@ -58,6 +58,7 @@ asked, `/api/quota/providers` answers 500 instead of an empty list.
 | `kilo` | Kilo Code | `providers/kilo.js` | `kilo`, `kilocode`, `kilo-code` (API key under `key`, `token`, or OAuth `access`; organization id under `kilocodeOrganizationId`, `organizationId`, or OAuth `accountId`, else OpenCode `provider.kilo.options.kilocodeOrganizationId`) |
 | `zenmux` | ZenMux | `providers/zenmux.js` | Optional Platform API key stored under `~/.config/openchamber/quota/zenmux.json` (`platformApiKey`). The OpenCode chat key is not used. |
 | `xai` | xAI | `providers/xai.js` | `xai` OAuth entry in OpenCode `auth.json` |
+| `usage-window` | Usage Window (local) | `providers/usage-window.js` | No credential. Configured when the opencode `usage-window` plugin state file exists (`USAGE_WINDOW_FILE`, default `~/.local/share/opencode-usage-window/state.json`). |
 
 ## Internal-only provider module
 - `providers/openai.js` exists for logic parity/reuse but is intentionally not registered for dispatcher ID routing.
@@ -338,6 +339,11 @@ The primary path reads `GetCurrentPeriodUsage` `planUsage` (Pro/Ultra). Enterpri
 4. `POST GetMe` resolves the current `userId` from the access token, and `POST GetTeamSpend` with `{ teamId }` returns per-member spend; the member whose `userId` matches supplies the `on_demand` window's used value (`spendCents`). There is no per-user spend endpoint and no email dependency; if either call fails the `on_demand` window is omitted rather than shown as `$0` used.
 
 `GetAggregatedUsageEvents` dollar totals are deliberately not used for the UI; they reflect internal token cost, not the dashboard request/on-demand meters. `spendCents` from `GetTeamSpend` is the member's on-demand spend and matches the dashboard meter; `includedSpendCents` from the same response is the internal included-pool usage and is not shown. `packages/web/server/lib/quota/providers/cursor.js` and `packages/vscode/src/quotaProviders.ts` implement the same fallback chain and verified-meter semantics — keep them in sync.
+
+## Usage Window (local estimate) semantics
+- For providers with no quota API (typically free models). The opencode plugin opens a fixed window (default 5h, `USAGE_WINDOW_HOURS`) on the first request after the previous one expired, and adds `input + output + reasoning` tokens and one request per completed assistant message, one bucket per `providerID/modelID`.
+- When a rate limit is observed it stores the window totals as a sample. The estimated limit is the median of samples, or `manualLimit` when set. `usedPercent` is the larger of the token and request ratios, capped at 100, and is 100 once the limit was hit in the current window.
+- With no samples and no manual limit, `usedPercent` is `null` and `valueLabel` shows raw counts marked `(uncalibrated)`. Each bucket key becomes a window key, so labels are the model ids.
 
 ## Notes for contributors
 - Keep provider IDs stable; clients use them directly.

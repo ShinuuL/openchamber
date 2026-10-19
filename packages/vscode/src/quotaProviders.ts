@@ -11,6 +11,7 @@ import { isRecord, toProviderEntity } from './opencode-config-v2';
 import { fetchExeDevUsage } from './exeDevQuota';
 import { refreshGoogleAccessToken } from '../../web/server/lib/quota/providers/google/oauth.js';
 import { antigravityHeaders, warnIfGeminiGroupMissing } from '../../web/server/lib/quota/providers/antigravity/client.js';
+import { fetchQuota as fetchUsageWindowQuota, isConfigured as isUsageWindowConfigured } from '../../web/server/lib/quota/providers/usage-window.js';
 
 type AuthEntry = Record<string, unknown> | string;
 type AuthFile = Record<string, AuthEntry>;
@@ -927,6 +928,11 @@ export const listConfiguredQuotaProviders = async () => {
 
   if (resolveXaiAuth(auth)) {
     configured.add('xai');
+  }
+
+  // Local estimate from the opencode usage-window plugin; no credential involved.
+  if (isUsageWindowConfigured()) {
+    configured.add('usage-window');
   }
 
   return Array.from(configured);
@@ -4251,6 +4257,8 @@ const fetchQuotaForProviderUncoalesced = async (providerId: string): Promise<Pro
       return fetchZenmuxQuota();
     case 'xai':
       return fetchXaiQuota();
+    case 'usage-window':
+      return fetchUsageWindowQuota();
     default:
       return buildResult({
         providerId,

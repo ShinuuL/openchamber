@@ -34,6 +34,7 @@ import * as ollamaCloud from './ollama-cloud.js';
 import * as wafer from './wafer.js';
 import * as opencodeGo from './opencode-go.js';
 import * as xai from './xai.js';
+import * as usageWindow from './usage-window.js';
 
 const registry = {
   claude: {
@@ -191,6 +192,12 @@ const registry = {
     providerName: xai.providerName,
     isConfigured: xai.isConfigured,
     fetchQuota: xai.fetchQuota
+  },
+  'usage-window': {
+    providerId: usageWindow.providerId,
+    providerName: usageWindow.providerName,
+    isConfigured: usageWindow.isConfigured,
+    fetchQuota: usageWindow.fetchQuota
   }
 };
 

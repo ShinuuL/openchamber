@@ -31,4 +31,5 @@ export const QUOTA_PROVIDERS: QuotaProviderMeta[] = [
   { id: 'kilo', name: 'Kilo Code' },
   { id: 'zenmux', name: 'ZenMux' },
   { id: 'xai', name: 'xAI' },
+  { id: 'usage-window', name: 'Usage Window (local)' },
 ];
